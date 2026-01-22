@@ -3,7 +3,7 @@ Author: Megan Hessel
 Date: January 21, 2026 
 
 ## Purpose 
-This repository will create an inforgraphic examining carbon dioxide and methane gas emissions across the globe. 
+This repository will create an infographic examining carbon dioxide and methane gas emissions across the globe. 
 This is the final assignment for EDS 240 Data Visualization. 
 
 ## File Structure 
