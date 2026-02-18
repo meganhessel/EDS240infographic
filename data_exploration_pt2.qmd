@@ -1,0 +1,18 @@
+---
+title: "data_exploration_pt2"
+format: html
+---
+
+```{r}
+plumes <- read.csv(here::here("data", "plumes.csv")) # plume 
+
+world <- read_sf(here::here("data", "gadm_410.gdb")) %>% 
+  clean_names()
+
+countries <- spData::world # World Data 
+
+sources <- read_sf(here::here("data", "sources_2025-12-28T21_56_47.135Z.json"))
+scenes <- read_sf(here::here("data", "scenes_2026-02-04T02_01_53.248Z.gpkg"))
+
+```
+

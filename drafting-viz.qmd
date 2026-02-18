@@ -1,0 +1,150 @@
+---
+title: "drafting-viz"
+format: html
+---
+
+```{r}
+library(treemapify)
+```
+
+
+**Purpose:**
+
+Global CO2 and CH4 plume emissions
+
+-   Understanding CO2 and CH4 plumes temporally, spatially, and between sectors.
+
+Since FPM1, I have narrowed my questions and goals down to 3 main investigations.
+
+How to do this?
+
+-   Data sets and variables I will use:
+
++----------------------+-----------------------+-----------------------------------------+
+| **Topics**           | **Data set**          | **Variables**                           |
++======================+=======================+=========================================+
+| Temporally           | Plume                 | datetime, emission_auto, gas            |
++----------------------+-----------------------+-----------------------------------------+
+| Spatially            | Plume                 | geometry                                |
++----------------------+-----------------------+-----------------------------------------+
+| Sectors              | \(1\) Sources         | sector, gas, plume_count, emission_auto |
+|                      |                       |                                         |
+|                      | \(2\) Plume           | ipcc_sector, emission_auto              |
++----------------------+-----------------------+-----------------------------------------+
+
+```{r}
+
+plumes <- read.csv(here::here("data", "plumes.csv")) 
+scences <- read_sf(here::here("data", "scenes_2026-02-04T02_01_53.248Z.gpkg"))
+sources  <- read_sf(here::here("data", "sources_2025-12-28T21_56_47.135Z.json"))
+
+# Make plumes spatial
+plumes <- st_as_sf(plumes, coords = c('plume_longitude', 'plume_latitude'), crs = 'EPSG:4326')
+
+st_crs(plumes)
+```
+
+
+## Temporally 
+
+```{r}
+
+
+```
+
+## Spatially 
+
+```{r}
+
+
+```
+
+## Sectors 
+
+Plot `sources` - learned they only have US sources 
+```{r}
+# Map - PROBLEM - NOT GLOBAL DATA 
+tm_shape(sources) + 
+  tm_dots() + 
+  tm_basemap("Esri.OceanBasemap")
+
+# Data Wrangling
+sourcesDF_sector_tot_emission <- sources %>% 
+  group_by(sector, gas) %>% 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE), 
+            .groups = "drop") %>% 
+  st_drop_geometry() 
+  
+
+
+# Methane part of whole plot 
+sourcesDF_sector_tot_emission %>% 
+  filter(gas == "CH4") %>% 
+  ggplot() + 
+  #geom_treemap(aes(area = total_emissions, fill = sector)) # Treemap
+  geom_bar(aes(x = "", y = total_emissions, fill = sector), # Pie chart
+           stat="identity") + 
+  coord_polar("y", start=0) + 
+  theme_void() + 
+
+  # labs 
+  labs(title = "Methane Sector Composition")
+
+
+
+
+# CO2 part of whole plot 
+sourcesDF_sector_tot_emission %>% 
+  filter(gas == "CO2") %>% 
+  ggplot() + 
+  #geom_treemap(aes(area = total_emissions, fill = sector)) # Treemap
+  geom_bar(aes(x = "", y = total_emissions, fill = sector), # Pie chart
+           stat="identity") + 
+  coord_polar("y", start=0) + 
+  theme_void() + 
+
+  # labs 
+  labs(title = "Carbon Dioxide Sector Composition")
+
+
+```
+
+Plot `plume` sectors 
+```{r}
+# map  
+tm_shape(plumes) + 
+  tm_dots() + 
+  tm_basemap("Esri.OceanBasemap")
+  
+# Data Wrangling 
+plumeDF_sector_tot_emission <- plumes %>% 
+  group_by(ipcc_sector, gas) %>% 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE), 
+            .groups = "drop") %>%
+  st_drop_geometry()
+
+# Methan plot 
+plumeDF_sector_tot_emission %>% 
+  filter(gas == "CH4") %>% 
+  ggplot() + 
+  #geom_treemap(aes(area = total_emissions, fill = ipcc_sector)) + # tree map 
+  geom_bar(aes(x = "", y = total_emissions, fill = ipcc_sector), # Pie chart
+           stat="identity") + 
+  coord_polar("y", start=0) + 
+  theme_void() + 
+  labs(title = "Methan Sector Composition")
+
+
+# CO2 plot 
+plumeDF_sector_tot_emission %>% 
+  filter(gas == "CO2") %>% 
+  ggplot() + 
+  #geom_treemap(aes(area = total_emissions, fill = ipcc_sector)) + # tree map 
+  geom_bar(aes(x = "", y = total_emissions, fill = ipcc_sector), # Pie chart
+           stat="identity") + 
+  coord_polar("y", start=0) + 
+  theme_void() + 
+  labs(title = "CO2 Sector Composition")
+  
+```
+
