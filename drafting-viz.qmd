@@ -130,6 +130,11 @@ b <- ggplot() +
 a | b 
 
 # Plot 2 
+
+# Define the y breaks 
+y_breaks <- c(0, 1e+08, 2e+08, 3e+08)  # adjust to your data
+
+# Polar Area Chart  
 ggplot() +
   geom_bar(data = plume_year, 
            aes(x = year, y = total_emissions, fill = gas), 
@@ -137,11 +142,18 @@ ggplot() +
   coord_polar(start = 0) + 
   theme_minimal() + 
   scale_fill_manual(values = gas_pal) + 
-  labs(title = "Yearly Total Plume Emissions from 2016 to 2025", 
+  scale_y_continuous(breaks = y_breaks, labels = NULL) +  # keep gridlines, remove default labels
+  annotate("text", 
+           x = 1,           # locks labels to first spoke
+           y = y_breaks, 
+           label = y_breaks, 
+           size = 2.2, 
+           color = "black") +
+    labs(title = "Yearly Total Plume Emissions from 2016 to 2025", 
        subtitle = "Spike in carbon dioxide plumes in 2023 to current day.", 
-       fill = "Greenhouse\nGasses") + 
+       fill = "Greenhouse\nGasses", 
+       y = "Total Emissions (kg/hr)") + 
   theme(
-    axis.text.y = element_text(angle = 0, hjust = 0.5),
     axis.title.x = element_blank(), 
     plot.title = element_text(face = "bold"), 
     plot.subtitle = element_text(color = "grey60")
@@ -207,21 +219,45 @@ China
 ```{r}
 plume_china <- plumes_country %>% 
   filter(name_long == "China") %>% 
-  group_by(datetime, gas) %>% 
+  group_by(year = year(datetime), month = month(datetime), gas) %>% 
   summarise(total_emissions = sum(emission_auto, na.rm = TRUE),
             avg_emissions = mean(emission_auto, na.rm = TRUE), 
             .groups = "drop") %>% 
+  mutate(date = as.Date(paste(year, month, "01", sep = "-"))) %>%
   st_drop_geometry()
 
-ggplot() + 
-  geom_point(data = plume_china %>% filter(gas == "CO2"), 
-             mapping = aes(x = datetime, y = total_emissions)) + 
-  geom_line(data = plume_china %>% filter(gas == "CO2"), 
-             mapping = aes(x = datetime, y = total_emissions))
-  
 
-plume_china$datetime         
-             
+
+china_CO2 <- ggplot() + 
+  geom_point(data = plume_china %>% filter(gas == "CO2"), 
+             mapping = aes(x = date, y = total_emissions), 
+             color = gas_pal["CO2"]) + 
+  geom_line(data = plume_china %>% filter(gas == "CO2"), 
+             mapping = aes(x = date, y = total_emissions), 
+            color = gas_pal["CO2"]) + 
+  labs(title = "Carbon Dioxide Plume Emissions", 
+       y = "Time", 
+       x = "Total Plume Emissions (kg/hr)")
+  
+china_CH4 <- ggplot() + 
+  geom_point(data = plume_china %>% filter(gas == "CH4"), 
+             mapping = aes(x = date, y = total_emissions), 
+             color = gas_pal["CH4"]) + 
+  geom_line(data = plume_china %>% filter(gas == "CH4"), 
+             mapping = aes(x = date, y = total_emissions), 
+            color = gas_pal["CH4"]) + 
+    labs(title = "Methane Plume Emissions", 
+       y = "Time", 
+       x = "Total Plume Emissions (kg/hr)")
+
+(china_CH4 / china_CO2) + 
+    plot_annotation(title = "China Plume Emissions Overtime", 
+                  subtitle = "IDK.", 
+                  caption = "Data Source: Carbon Mapper",
+                  theme = theme(plot.title = element_text(size = 17, face = "bold"), 
+                                plot.subtitle = element_text(size = 12, color = "gray60"),
+                                plot.caption = element_text(face = "italic")))
+
 ```
 
 
