@@ -5,6 +5,11 @@ format: html
 
 ```{r}
 library(treemapify)
+library(tidyverse)
+library(dplyr)
+library(sf)
+library(tmap)
+library(patchwork)
 ```
 
 
@@ -33,33 +38,393 @@ How to do this?
 +----------------------+-----------------------+-----------------------------------------+
 
 ```{r}
-
-plumes <- read.csv(here::here("data", "plumes.csv")) 
+# 2025 data
+#plumes <- read.csv(here::here("data", "plumes.csv")) 
 scences <- read_sf(here::here("data", "scenes_2026-02-04T02_01_53.248Z.gpkg"))
 sources  <- read_sf(here::here("data", "sources_2025-12-28T21_56_47.135Z.json"))
+
+# Plumes by year
+plumes_2016 <- read.csv(here::here("data", "plume_yearly", "export_2016_2017", "export_2016-01-01_2017-01-01.csv")) 
+plumes_2017 <- read.csv(here::here("data", "plume_yearly", "export_2017_2018", "export_2017-01-01_2018-01-01.csv")) 
+plumes_2018 <- read.csv(here::here("data", "plume_yearly", "export_2018_2019", "export_2018-01-01_2019-01-01.csv")) 
+plumes_2019 <- read.csv(here::here("data", "plume_yearly", "export_2019_2020", "export_2019-01-01_2020-01-01.csv")) 
+plumes_2020 <- read.csv(here::here("data", "plume_yearly", "export_2020_2021", "export_2020-01-01_2021-01-01.csv")) 
+plumes_2021 <- read.csv(here::here("data", "plume_yearly", "export_2021_2022", "export_2021-01-01_2022-01-01.csv")) 
+plumes_2022 <- read.csv(here::here("data", "plume_yearly", "export_2022_2023", "export_2022-01-01_2023-01-01.csv")) 
+plumes_2023 <- read.csv(here::here("data", "plume_yearly", "export_2023_2024", "export_2023-01-01_2024-01-01.csv")) 
+plumes_2024 <- read.csv(here::here("data", "plume_yearly", "export_2024_2025", "export_2024-01-01_2025-01-01.csv")) 
+plumes_2025 <- read.csv(here::here("data", "plume_yearly", "export_2025_2025", "export_2025-01-01_2025-10-01.csv")) 
+
+# combines the years into `plumes`
+plumes <- rbind(plumes_2016, plumes_2017, plumes_2018, plumes_2019, plumes_2020, plumes_2021, plumes_2022, plumes_2023, plumes_2024, plumes_2025)
+
 
 # Make plumes spatial
 plumes <- st_as_sf(plumes, coords = c('plume_longitude', 'plume_latitude'), crs = 'EPSG:4326')
 
-st_crs(plumes)
+counties <- spData::world
+
 ```
 
 
 ## Temporally 
 
 ```{r}
+# Wrangle 
+# Change datetime column 
+plumes$datetime <- as.Date(plumes$datetime)
+
+# New year column 
+plumes$year <- year(plumes$datetime)
+plumes$year <- as.factor(plumes$year)
+
+# Group each day together 
+plume_datetime <- plumes %>% 
+  group_by(datetime, gas) %>% 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE),
+            avg_emissions = mean(emission_auto, na.rm = TRUE),
+            .groups = "drop") %>% 
+  st_drop_geometry()
+
+# Group each year together 
+plume_year <- plumes %>% 
+  group_by(year, gas) %>% 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE),
+            avg_emissions = mean(emission_auto, na.rm = TRUE), 
+            .groups = "drop") %>% 
+  st_drop_geometry()
+
+gas_pal <- c("CO2" = "#7F28D5", 
+             "CH4" = "#F0831F")
+
+```
+
+```{r}
+
+# Plot
+ggplot() +
+  geom_bar(data = plume_datetime %>% filter(gas == "CO2"),
+           aes(x = datetime, y = total_emissions), 
+           stat = "identity", 
+           color = "red") + 
+  geom_bar(data = plume_datetime %>% filter(gas == "CH4"),
+           aes(x = datetime, y = - total_emissions),
+           stat = "identity", 
+           color = "blue") + 
+  scale_fill_identity()
+    
+
+
+a <- ggplot() +
+  geom_bar(data = plume_datetime %>% filter(gas == "CO2"),
+           aes(x = datetime, y = total_emissions), 
+           stat = "identity", 
+           color = "red")
+
+b <- ggplot() + 
+  geom_bar(data = plume_datetime %>% filter(gas == "CH4"),
+           aes(x = datetime, y = total_emissions),
+           stat = "identity", 
+           color = "blue")
+  
+a | b 
+
+# Plot 2 
+ggplot() +
+  geom_bar(data = plume_year, 
+           aes(x = year, y = total_emissions, fill = gas), 
+           stat = "identity") +
+  coord_polar(start = 0) + 
+  theme_minimal() + 
+  scale_fill_manual(values = gas_pal) + 
+  labs(title = "Yearly Total Plume Emissions from 2016 to 2025", 
+       subtitle = "Spike in carbon dioxide plumes in 2023 to current day.", 
+       fill = "Greenhouse\nGasses") + 
+  theme(
+    axis.text.y = element_text(angle = 0, hjust = 0.5),
+    axis.title.x = element_blank(), 
+    plot.title = element_text(face = "bold"), 
+    plot.subtitle = element_text(color = "grey60")
+  )
 
 
 ```
 
+
 ## Spatially 
 
+Plume as points on a map 
 ```{r}
+CO2_plumes <- plumes %>% 
+  filter(gas == "CO2")
+
+CH4_plumes <- plumes %>% 
+  filter(gas == "CH4")
+
+# Plot plume plots 
+tm_shape(CO2_plumes) + 
+  tm_dots(fill = "red") + 
+  tm_shape(CH4_plumes) + 
+  tm_dots(fill = "blue") + 
+  tm_basemap("Esri.OceanBasemap")
+```
+
+```{r}
+# JOIN Plume + Country data 
+plumes_country <- st_join(counties, plumes)
+```
+
+Map sum of all plume emissions 
+```{r}
+# Plot all emissions globally 
+plumes_country %>% 
+  group_by(name_long) %>% 
+  summarise(emission_total = sum(emission_auto, na.rm = TRUE), .groups = "drop") %>% 
+  # Plot 
+  ggplot() + 
+  geom_sf(aes(fill = emission_total)) + 
+  scale_fill_viridis_c() + 
+  theme_void() + 
+  labs(
+    title = "Total Plume Emissions Per Country", 
+    subtitle = "China has the highest plume emissions, followed by India.",
+    fill = "Total Plume Emission", 
+    caption = "Data Source: Carbon Mapper"
+  ) + 
+  theme(
+    legend.position = "bottom", 
+    plot.title = element_text(size = 15, face = "bold"), 
+    plot.title.position = "plot", 
+    plot.subtitle.position = "plot",  
+    plot.caption = element_text(face = "italic")
+  ) + 
+  guides(fill = guide_colorbar(barwidth = 15, barheight = 0.75, title.position = "top")) 
+
+```
+
+
+China 
+```{r}
+plume_china <- plumes_country %>% 
+  filter(name_long == "China") %>% 
+  group_by(datetime, gas) %>% 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE),
+            avg_emissions = mean(emission_auto, na.rm = TRUE), 
+            .groups = "drop") %>% 
+  st_drop_geometry()
+
+ggplot() + 
+  geom_point(data = plume_china %>% filter(gas == "CO2"), 
+             mapping = aes(x = datetime, y = total_emissions)) + 
+  geom_line(data = plume_china %>% filter(gas == "CO2"), 
+             mapping = aes(x = datetime, y = total_emissions))
+  
+
+plume_china$datetime         
+             
+```
+
+
+India 
+```{r}
+
+```
+
+
+USA 
+```{r}
+
+```
+
+
+Saudi Arabia 
+```{r}
+
+```
+
+
+
+
+Map CO2 Plume Emissions globally 
+
+```{r}
+
+# Filter for CO2 emissions total per country 
+plumes_country_CO2 <- plumes_country %>% 
+  group_by(name_long, gas) %>% 
+  summarise(emission_total = sum(emission_auto, na.rm = TRUE), .groups = "drop") %>% 
+  filter(gas == "CO2") %>% 
+  st_drop_geometry()
+
+
+counties %>% # Want all polygons in the map 
+  left_join(plumes_country_CO2, by = "name_long") %>% # Join counties with filtered df 
+  # Plot
+  ggplot() + 
+  geom_sf(aes(fill = emission_total))+
+  scale_fill_viridis_c(na.value = "grey90")+  # Grey out countries with no emissions 
+  theme_void() +
+  labs(
+    title = "Total Carbon Dioxide Plume Emissions Per Country", 
+    subtitle = "China has the highest carbon dioxide plume emissions, followed by India.",
+    fill = "Total Plume Emission", 
+    caption = "Data Source: Carbon Mapper"
+  ) +
+  theme(
+    legend.position = "bottom", 
+    plot.title = element_text(size = 15, face = "bold"), 
+    plot.title.position = "plot", 
+    plot.subtitle.position = "plot", 
+    plot.margin = margin(b = 5, t = 5, l = 5, r = 5), 
+    plot.caption = element_text(face = "italic")
+  ) + 
+  guides(fill = guide_colorbar(barwidth = 15, barheight = 0.75, title.position = "top")) 
+
+
+```
+
+
+Map CH4 Plume Emissions globally 
+
+```{r}
+
+# Filter for CH4 emissions total per country 
+plumes_country_CH4 <- plumes_country %>% 
+  group_by(name_long, gas) %>% 
+  summarise(emission_total = sum(emission_auto, na.rm = TRUE), .groups = "drop") %>% 
+  filter(gas == "CH4") %>% 
+  st_drop_geometry()
+
+counties %>% # Want all polygons in the map 
+  left_join(plumes_country_CH4, by = "name_long") %>% # join all counties with CH4 df 
+  # Plot
+  ggplot() + 
+  geom_sf(aes(fill = emission_total))+
+  scale_fill_viridis_c(na.value = "grey90")+  # Grey out countries with no emissions 
+  theme_void() +
+  labs(
+    title = "Total Methane Plume Emissions Per Country", 
+    subtitle = "China has the highest methane plume emissions, followed by India.",
+    fill = "Total Plume Emission", 
+    
+  ) +
+  theme(
+    legend.position = "bottom", 
+    plot.title = element_text(size = 15, face = "bold"), 
+    plot.title.position = "plot", 
+    plot.subtitle.position = "plot", 
+    plot.margin = margin(b = 5, t = 5, l = 5, r = 5)
+  ) + 
+  guides(fill = guide_colorbar(barwidth = 15, barheight = 0.75, title.position = "top")) 
+
 
 
 ```
 
 ## Sectors 
+
+Sectors - color palette, dictionary, order 
+```{r}
+
+sector_color_pal <- c("Coal Mining (1B1a)" = "#453D68",
+                      "Waste Water (6B)" = "#6C67DF",
+                      "Oil & Gas (1B2)" = "#46C3CA",
+                      "Livestock (4B)" = "#F3F7A2", 
+                      "Solid Waste (6A)" = "#F7CAA5",
+                      "Electricity Generation (1A1)" = "#e2863f",
+                      "Other" = "#c41538")
+  
+
+sector_dictionary <- c(
+  "1B1a" = "Coal Mining (1B1a)",
+  "6B" = "Waste Water (6B)",
+  "1B2" = "Oil & Gas (1B2)",
+  "4B" = "Livestock (4B)",
+  "6A" = "Solid Waste (6A)",
+  "1A1" = "Electricity Generation (1A1)"
+)
+
+sector_order <- c("Coal Mining (1B1a)", "Waste Water (6B)", "Oil & Gas (1B2)", "Livestock (4B)","Solid Waste (6A)","Electricity Generation (1A1)", "Other"
+)
+
+```
+
+
+Plot `plume` sectors 
+```{r}
+# Look at extend of the plume data   
+# tm_shape(plumes) + 
+#   tm_dots() + 
+#   tm_basemap("Esri.OceanBasemap")
+  
+# Data Wrangling 
+plumeDF_sector_tot_emission <- plumes %>% 
+  group_by(ipcc_sector, gas) %>% 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE), # Total Emissions 
+            .groups = "drop") %>%
+  st_drop_geometry() %>% 
+  filter(!ipcc_sector == "") # remove data points with no sector listed 
+
+
+# Turn sectors into factors 
+plumeDF_sector_tot_emission$ipcc_sector <- factor(plumeDF_sector_tot_emission$ipcc_sector,
+                                                     levels = sector_order)
+
+
+# Methane Sector plot 
+plumeDF_CH4_sector_plot <- plumeDF_sector_tot_emission %>% 
+  filter(gas == "CH4") %>% 
+  ggplot() + 
+  #geom_treemap(aes(area = total_emissions, fill = ipcc_sector)) + # tree map 
+  geom_bar(aes(x = "", y = total_emissions, fill = ipcc_sector), # Pie chart
+           stat="identity") + 
+  coord_polar("y", start=0) + 
+  scale_fill_manual(values = sector_color_pal) +
+  theme_void() + 
+  labs(title = "Methane Plumes", 
+       fill = "Sector") + 
+  theme(plot.title = element_text(size = 13))
+
+
+
+# CO2 Sector plot 
+plumeDF_CO2_sector_plot <- plumeDF_sector_tot_emission %>% 
+  filter(gas == "CO2") %>% 
+  ggplot() + 
+  #geom_treemap(aes(area = total_emissions, fill = ipcc_sector)) + # tree map 
+  geom_bar(aes(x = "", y = total_emissions, fill = ipcc_sector), # Pie chart
+           stat="identity") + 
+  coord_polar("y", start=0) + 
+  scale_fill_manual(values = sector_color_pal) +
+  theme_void() + 
+  labs(title = "Carbon Dioxide Plumes", 
+       fill = "Sector") + 
+  theme(plot.title = element_text(size = 13), 
+        legend.position = "none")
+  
+# Plots together 
+(plumeDF_CO2_sector_plot | plumeDF_CH4_sector_plot) +
+  plot_annotation(title = "Sector Composition", 
+                  subtitle = "The oil and natural gas sector emits the most methane,\nwhereas Electricity Generation emits the most carbon dioxide.", 
+                  caption = "Data Source: Carbon Mapper",
+                  theme = theme(plot.title = element_text(size = 17, face = "bold"), 
+                                plot.subtitle = element_text(size = 12, color = "gray60"),
+                                plot.caption = element_text(face = "italic")))
+
+
+
+
+# Mathane has plumes with blank sectors ? - IDK what do with these 10 points
+plumes %>% 
+  filter(ipcc_sector == "") %>% 
+  tm_shape() + 
+  tm_dots() + 
+  tm_basemap("Esri.OceanBasemap")
+
+```
+
+## EXTRAS 
+
 
 Plot `sources` - learned they only have US sources 
 ```{r}
@@ -102,49 +467,7 @@ sourcesDF_sector_tot_emission %>%
            stat="identity") + 
   coord_polar("y", start=0) + 
   theme_void() + 
-
   # labs 
   labs(title = "Carbon Dioxide Sector Composition")
 
-
 ```
-
-Plot `plume` sectors 
-```{r}
-# map  
-tm_shape(plumes) + 
-  tm_dots() + 
-  tm_basemap("Esri.OceanBasemap")
-  
-# Data Wrangling 
-plumeDF_sector_tot_emission <- plumes %>% 
-  group_by(ipcc_sector, gas) %>% 
-  summarise(total_emissions = sum(emission_auto, na.rm = TRUE), 
-            .groups = "drop") %>%
-  st_drop_geometry()
-
-# Methan plot 
-plumeDF_sector_tot_emission %>% 
-  filter(gas == "CH4") %>% 
-  ggplot() + 
-  #geom_treemap(aes(area = total_emissions, fill = ipcc_sector)) + # tree map 
-  geom_bar(aes(x = "", y = total_emissions, fill = ipcc_sector), # Pie chart
-           stat="identity") + 
-  coord_polar("y", start=0) + 
-  theme_void() + 
-  labs(title = "Methan Sector Composition")
-
-
-# CO2 plot 
-plumeDF_sector_tot_emission %>% 
-  filter(gas == "CO2") %>% 
-  ggplot() + 
-  #geom_treemap(aes(area = total_emissions, fill = ipcc_sector)) + # tree map 
-  geom_bar(aes(x = "", y = total_emissions, fill = ipcc_sector), # Pie chart
-           stat="identity") + 
-  coord_polar("y", start=0) + 
-  theme_void() + 
-  labs(title = "CO2 Sector Composition")
-  
-```
-
