@@ -1,0 +1,45 @@
+---
+title: "data_exploration"
+format: html
+---
+
+Load libraries 
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(tmap)
+library(sf)
+library(dplyr)
+```
+
+## Import data 
+```{r}
+plumes <- read.csv(here::here("data", "plumes.csv"))
+#world <- read_sf(here::here("data", "gadm_410.gdb"))
+scences_2026 <- read_sf(here::here("data", "scenes_2026-02-04T02_01_53.248Z.gpkg"))
+sources_2025 <- read_sf(here::here("data", "sources_2025-12-28T21_56_47.135Z.json"))
+
+
+```
+
+## Clean 
+```{r}
+# Make sf 
+plumes <- st_as_sf(plumes, coords = c('plume_longitude', 'plume_latitude'))
+```
+
+Mapping Plumes
+```{r}
+tm_shape(plumes) + 
+  tm_dots()
+```
+
+Looking at Sectors emission avg for CO2 and CH4
+```{r}
+plumes %>% 
+  st_drop_geometry() %>% 
+  group_by(ipcc_sector, gas) %>% 
+  summarise(mean = mean(emission_auto, na.rm = TRUE)) %>% 
+  ungroup()
+  
+```

@@ -1,0 +1,211 @@
+---
+title: "drafting_viz_pt2"
+format: html
+---
+
+Stream plot emission by country 
+
+country vs world trend overtime as line plot 
+
+methane vs co2 
+-  Circles with different portions inside vs outside 
+
+
+CANVA and affinity 
+```{r}
+library(ggstream)
+
+```
+
+
+
+```{r}
+# Data Wrangling 
+plumeDF_sector_tot_emission <- plumes %>% 
+  group_by(ipcc_sector, gas) %>% 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE), # Total Emissions 
+            .groups = "drop") %>%
+  st_drop_geometry() %>% 
+  filter(!ipcc_sector == "") # remove data points with no sector listed 
+
+
+# Turn sectors into factors 
+plumeDF_sector_tot_emission$ipcc_sector <- factor(plumeDF_sector_tot_emission$ipcc_sector,
+                                                     levels = sector_order)
+
+
+# Methane Sector plot 
+plumeDF_CH4_sector_plot <- plumeDF_sector_tot_emission %>% 
+  filter(gas == "CH4") %>% 
+  ggplot() + 
+  #geom_treemap(aes(area = total_emissions, fill = ipcc_sector)) + # tree map 
+  geom_bar(aes(x = "", y = total_emissions, fill = ipcc_sector), # Pie chart
+           stat="identity", 
+           width = 0.7, 
+           color = "black") + 
+  #coord_polar("y", start=0) + 
+  scale_fill_manual(values = sector_color_pal) +
+  theme_void() + 
+  labs(title = "Methane Plumes", 
+       fill = "Sector") + 
+  theme(plot.title = element_text(size = 13))
+
+
+
+# CO2 Sector plot 
+plumeDF_CO2_sector_plot <- plumeDF_sector_tot_emission %>% 
+  filter(gas == "CO2") %>% 
+  ggplot() + 
+  #geom_treemap(aes(area = total_emissions, fill = ipcc_sector)) + # tree map 
+  geom_bar(aes(x = "", y = total_emissions, fill = ipcc_sector), # Pie chart
+           stat="identity", 
+           width = 0.7, 
+           color = "black") + 
+  #coord_polar("y", start=0) + 
+  scale_fill_manual(values = sector_color_pal) +
+  theme_void() + 
+  labs(title = "Carbon Dioxide Plumes", 
+       fill = "Sector") + 
+  theme(plot.title = element_text(size = 13), 
+        legend.position = "none")
+  
+# Plots together 
+plume_sector_plot <- (plumeDF_CO2_sector_plot | plumeDF_CH4_sector_plot) +
+  plot_annotation(title = "Sector Composition", 
+                  subtitle = "The oil and natural gas sector emits the most methane,\nwhereas Electricity Generation emits the most carbon dioxide.", 
+                  caption = "Data Source: Carbon Mapper",
+                  theme = theme(plot.title = element_text(size = 17, face = "bold"), 
+                                plot.subtitle = element_text(size = 12, color = "gray60"),
+                                plot.caption = element_text(face = "italic")))
+plume_sector_plot
+
+ggsave(filename = here::here("final_figs", "sector.pdf"), 
+       plot = plume_sector_plot, 
+       height = 7,
+       width = 9
+       )
+
+```
+
+```{r}
+plumes_per_country <-plumes_country %>% 
+  st_drop_geometry() %>% 
+  group_by(name_long, year = year(datetime), month = month(datetime), gas) %>%  # Find avg and sum for each month of each year 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE),
+            avg_emissions = mean(emission_auto, na.rm = TRUE),
+            pop = mean(pop),
+            .groups = "drop") %>%
+  mutate(year_dec = year + (month - 1) / 12, #decimal year 
+         emission_total_capita = (total_emissions/pop), 
+         emission_per_million = (total_emissions/pop) * 1e6) # per 1 million people
+
+str(plumes_per_country$year)
+as.Date(plumes_per_country$year)
+
+mutate(date = as.Date(paste(year, month, "01", sep = "-"))) %>% 
+
+```
+
+```{r}
+top_countries_CH4 <- plumes_per_country %>%
+  filter(gas == "CH4") %>%
+  group_by(name_long) %>%
+  summarise(total = sum(emission_per_million)) %>%
+  slice_max(total, n = 10) %>%
+  pull(name_long)
+
+
+top_countries_CO2 <- plumes_per_country %>%
+  filter(gas == "CO2") %>%
+  group_by(name_long) %>%
+  summarise(total = sum(emission_per_million)) %>%
+  slice_max(total, n = 10) %>%
+  pull(name_long)
+
+
+```
+
+```{r}
+country_pal <- c(
+   "Iran" = "#E9625C" # CH4
+   "Turkmenistan" = "#019C50"
+   "China" = "#FFDF00"
+   "Jordan" = "#030303"
+   "Saudi Arabia" = "#09532C"
+   "Argentina" = "#85A4E3"
+   "Algeria" = "#827748"
+   "Peru" = "#E32C22"
+   "Syria" = "#228248"
+   "Mexico" = "#B96532"
+   "Russian Federation" = "#F0E61C"
+   "Libya" = "#000000"
+   "South Africa" = "#00138A" #CO2
+   "Kuwait" = "#FE0100",
+   "Kazakhstan" = "#13AEC9",
+   "Morocco" = "#E70013",
+   "Ukraine" = "",
+   "Qatar" = "", 
+   "Turkmenistan" = "", 
+   "Brazil"= "", 
+   "Taiwan"            
+   "Lao PDR" = "",
+   "Mongolia" =""   
+)
+
+
+
+```
+
+
+```{r}
+plumes_CO2_per_country <- plumes_per_country %>% 
+  filter(gas == "CO2", 
+         year >= 2023, 
+         name_long %in% top_countries_CO2) %>% 
+  ggplot(aes(x = year_dec, #  use decimal year 
+             y = emission_per_million, 
+             fill = name_long)) +
+  geom_stream(type = "ridge",  bw = 0.85) + 
+  geom_stream_label(aes(label = name_long), 
+                    type = "ridge", 
+                    size = 2.5) +
+  theme_minimal() + 
+  theme(legend.position = "none") 
+
+plumes_CO2_per_country
+
+
+
+
+plumes_CH4_per_country <- plumes_per_country %>% 
+  filter(gas == "CH4", 
+         year >= 2023, 
+         name_long %in% top_countries_CH4) %>% 
+  #mutate(avg_emissions = -avg_emissions) %>% 
+  ggplot(aes(x = year_dec, #  use decimal year 
+             y = emission_per_million, 
+             fill = name_long)) +
+  geom_stream(type = "ridge",  bw = 0.85) + 
+  geom_stream_label(aes(label = name_long), 
+                    type = "ridge", 
+                    size = 2.5) +
+  theme_minimal() + 
+  theme(legend.position = "none")
+
+
+plumes_CH4_per_country
+
+
+
+plumes_CO2_per_country / plumes_CH4_per_country + plot_layout(heights = c(1, 1))
+
+```
+
+```{r}
+plumes_per_country %>%
+  filter(gas == "CH4") %>%
+  mutate(year_dec = year + (month - 1) / 12) %>%
+  ggplot(aes(x = year_dec, y = avg_emissions, fill = name_long)) +
+  geom_stream()
+```
+
