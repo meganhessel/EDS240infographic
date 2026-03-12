@@ -7,23 +7,41 @@ message: false
 
 ## Review feedback and plan your revisions
 
-Summarize the key feedback points you received on your FPM #3 draft visualizations.
+**Summarize the key feedback points you received on your FPM #3 draft visualizations.**
 
 -   Need to give a better background: What is a plume? What is global warming potential? Add a picture of a plume.
 
 -   Fix color palettes - consistency
 
--   
+-   When looking at countries, do emissions per millions of people.
 
-Explain which of these suggestions you plan to implement and how.
+**Explain which of these suggestions you plan to implement and how**- All of them!!!
 
-Identify any areas where you decided not to follow feedback and explain why (e.g. “it didn’t align with my main message” or “I found a different design solution”).
+-   I plan to add...
 
-Address which (if any) of the ten design elements you do not plan to implement (rememeber, not all ten will necessarily apply to your project, and that’s okay!).
+    -   a sentence explaining what a plume is.
+
+    -   Add a plume image or plume resemblance with plot design - make one of my bar plots into a smoke stack with a plume coming out of it.
+
+-   I tried to match the colors to the theme of the data source with color picker. Please say something if you don't like. I was having a hard time with the country plot because its so many countries (top 10 CO2 and CH4 emitters with some overlap between the gasses = 15 countries).
+
+-   Graphing emissions per million by mutating and then graphing `emission_per_million = (total_emissions/pop) * 1e6).`
+
+**Identify any areas where you decided not to follow feedback and explain why (e.g. “it didn’t align with my main message” or “I found a different design solution”).**
+
+-   I scratched lots of my other plots, including my previous temporal plot and map, after bouncing ideas with classmates. I found a different design solution - a stream plot that looks at emissions per country overtime.
+
+**Address which (if any) of the ten design elements you do not plan to implement (rememeber, not all ten will necessarily apply to your project, and that’s okay!).**
+
+-    I did not apply a DEI lens to my design other than (mostly) color-blind friendly palettes.
+
+-   I do not plan to center my primary message,
+
+-   I plan to considering accessibility with colorblind-friendly palettes /contrast and alt text. But I need to go back and add alt text at the end.
 
 ## Blog Post
 
-# Understanding Global Carbon Dioxide & Methane Plume Emissions
+# Understanding Global [Carbon Dioxide]{style="color:#FFBF44;"} & [Methane]{style="color:#7F28D5;"} Plume Emissions
 
 ```{r}
 #| echo: false
@@ -66,30 +84,36 @@ plumes_country <- st_join(counties, plumes)
 ```
 
 ```{r fig.width=12, fig.height=8}
-#| code-fold: true
+#| echo: false
+#| eval: true
 img <- png::readPNG(here::here("images", "plume2.png"))
 plot(as.raster(img))
 ```
 
-Greenhouse gas emissions are warming our planet and altering natural processes at alarming rates (Figure 1). Sea levels are rising, extreme weather events are becoming more common, and oceans are acidifying. These catastrophic events are due to the rise in greenhouse gasses and disrupt ecosystems, human health, and vital infrastructure. 
+Greenhouse gas emissions are warming our planet and altering natural processes at alarming rates (Figure 1). Since the industrial revolution, greenhouse gas emissions have dramatically increased. Specifically, carbon dioxide (CO2) increased from 280 parts per million (ppm) to over 410 ppm while methane (CH4) has risen from 700 parts per billion (ppb) to around 1,900 ppb. These greenhouse gasses that now overwhelm our atmosphere absorb and re-emit infrared radiation (heat) in all directions.
 
-```{r fig.width=8, fig.height=6}
-#| code-fold: true
+All to say, increase in greenhouse gasses (like carbon dioxide and methane), increase our global temperature - this is called **climate change**. Today, sea levels are rising, extreme weather events are becoming more common, and oceans are acidifying due to the rise in greenhouse gasses. Ecosystems, human health, and vital infrastructure are disrupted and even destroyed.
+
+```{r fig.width=8, fig.height=6., fig.cap="Figure 1"}
+#| echo: false
+#| eval: true
 img <- png::readPNG(here::here("images", "global-temperature-anomalies-by-month.png"))
-plot(as.raster(img))
+plot(as.raster(img)) 
 ```
 
-To reduce greenhouse gas emissions, Carbon Mapper tracks and records global methane and carbon dioxide emission plume data. This data is made accessible to the public to promote transparency, education, and climate action. 
+**Emission plumes** are columns of pollutants, mostly greenhouse gasses, that are released into the atmosphere. As a kid, I would always call them "cloud machines" due to the visible cloud-like gas leaking from tall smoke stack. Little did I know, the "cloud machines" were adding to air pollution and climate change.
 
-Emission plumes …. 
+To reduce greenhouse gas emissions, *Carbon Mapper* tracks and records global methane and carbon dioxide emission plume data. This data is made accessible to the public to promote transparency, education, and climate action. 
 
-The goal of this infographic is to further Carbon Mapper’s mission: use their public data to educate and promote local climate action, globally. Therefore, the infographic addresses these questions: 
+The goal of this infographic is to further *Carbon Mapper’s* mission: use their public plume data to educate and promote local climate action, globally. Therefore, the infographic addresses these questions: 
 
 -   What are plumes made of and what are the gasses characteristics? 
 
 -   Who is disproportionately contributing to emission plumes? 
 
 You can check out the [full data here](https://github.com/meganhessel/EDS240infographic.git)!
+
+### The Infographic
 
 ```{r fig.width=10, fig.height=15}
 #| code-fold: true
@@ -182,7 +206,7 @@ plume_sector_plot
 
 After polishing in Affinity:
 
-```{r fig.width=6, fig.height=10}
+```{r fig.width=10, fig.height=10}
 #| code-fold: true
 img <- png::readPNG(here::here("outputs", "sector_plot_ss.png"))
 plot(as.raster(img))
@@ -246,8 +270,9 @@ gas_total_emissions / gas_gwp_plot
 
 After polishing in Affinity:
 
-```{r}
-#| code-fold: true
+```{r fig.width=10, fig.height=10}
+#| echo: false
+#| eval: true
 img <- png::readPNG(here::here("outputs", "emission_gwp_ss.png"))
 plot(as.raster(img))
 ```
@@ -265,13 +290,7 @@ The plots in `ggplot`:
 ```{r}
 #| code-fold: true
 
-
 # Data wrangling 
-
-
-
-
-
 plumes_per_country <-plumes_country %>% 
   st_drop_geometry() %>% 
   group_by(name_long, year = year(datetime), month = month(datetime), gas) %>%  # Find avg and sum for each month of each year 
@@ -342,14 +361,15 @@ plumes_per_country %>%
 After polishing in Affinity:
 
 ```{r fig.width=10, fig.height=8}
-#| code-fold: true
+#| echo: false
+#| eval: true
 img <- png::readPNG(here::here("outputs", "country_ss.png"))
 plot(as.raster(img))
 ```
 
 ## **Colors** 
 
-Most of the color palettes are color-picked from [Carbon Mapper’s website](https://carbonmapper.org/). Carbon Mapper supplies all data used in this infographic. 
+Most of the color palettes are color-picked from [Carbon Mapper’s website](https://carbonmapper.org/) who supplied all data used for the infographic. 
 
 The carbon dioxide and methane colors are an orange-yellow and a purple which are Carbon Mapper’s main color theme and color-blind friendly. 
 
