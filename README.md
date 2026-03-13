@@ -15,16 +15,25 @@ The folders `data_exploration`, `drafting_viz`, and `FMP4` are the initial assig
 ```
 project/
 ├── data/
-│   ├── raw/
-│   ├── processed/
+│   ├── Carbon Mapper raw data/
 │   └── metadata/
-├── scripts/
-│   ├── preprocessing/
-│   ├── analysis/
-│   └── visualization/
+├── data_exploration/
+│   ├── data_exploration.qmd/
+│   └── data_exploration_pt2.qmd/
+├── drafting_viz/
+│   ├── drafting_viz.qmd/
+│   ├── anticipated_viz.png/
+│   └── fpm3_infographic.png/
+├── FPM4/
+│   └── FMP4.qmd/
+├── figs/
+│   ├── Draft inforgraphics/
+│   └── plots/
+├── images/
 ├── outputs/
-│   ├── figures/
-│   └── inforgraphic
+│   ├── country_ss.png/
+│   ├── emission_gwp_ss.png/
+│   └── sector_plots_ss.png/
 ├── docs/
 └── README.md
 ```
