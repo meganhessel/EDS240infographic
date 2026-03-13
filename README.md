@@ -8,7 +8,9 @@ This is the final assignment for EDS 240 Data Visualization.
 
 ## File Structure 
 
-This project is in the development phase. Currently, there is a single `data_exploration` quarto document and a README located in the root. As the project progresses, the repository structure will follow the datatree below: 
+This project is in the development phase and is a project for EDS240 Data Visualization. Therefore, the data structure mirrors the assignments and their order. 
+
+The folders `data_exploration`, `drafting_viz`, and `FMP4` are the initial assignments to the final infographic which will be located in `FPM5`. To accomplish the infographic, plots were drafted in drafting_viz qmds and finalized in affinity - both located within the `figs` and `output` folders. 
 
 ```
 project/
@@ -22,7 +24,7 @@ project/
 │   └── visualization/
 ├── outputs/
 │   ├── figures/
-│   └── tables/
+│   └── inforgraphic
 ├── docs/
 └── README.md
 ```

@@ -29,29 +29,29 @@ Since FPM1, I have narrowed my questions and goals down to 3 main investigations
 
 **Data sets and variables I will use:**
 
-+------------+---------------------+-----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
-| **Topics** | **Data sets**       | **Variables/ Column Names** | **How**                                                                                                                                                                                                                   | **Problems/ Questions**                                                                                                         |
-+------------+---------------------+-----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
-| Temporally | Plume               | `datetime`                  | Find total and average emissions overtime for CO2 and CH4 using `group_by` and `summarise`.                                                                                                                               | Inconsistent records in past.                                                                                                   |
-|            |                     |                             |                                                                                                                                                                                                                           |                                                                                                                                 |
-|            |                     | `emission_auto`             |                                                                                                                                                                                                                           | Methane concentrations are MUCH less than CO2 –\> cannot be put on same plot and share a y-axis.                                |
-|            |                     |                             |                                                                                                                                                                                                                           |                                                                                                                                 |
-|            |                     | `gas`                       |                                                                                                                                                                                                                           | What would be better: average or total emissions in a day/year?                                                                 |
-+------------+---------------------+-----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
-| Spatially  | \(1\) Plume         | \(1\) `geometry` (points)   | Spatially join the point Plume and polygon World data.                                                                                                                                                                    | What is better for understanding emissions for each country: per capita or total/mean emissions for each country?               |
-|            |                     |                             |                                                                                                                                                                                                                           |                                                                                                                                 |
-|            | \(2\) spData::World | `gas`                       | Find the averages and total `emission_auto` measurements (per capita) for each country.                                                                                                                                   |                                                                                                                                 |
-|            |                     |                             |                                                                                                                                                                                                                           |                                                                                                                                 |
-|            |                     | `emission_auto`             | Additionally, for the countries with the highest emission rates, will create line plots of CO2 and CH4 emission rates over time by (a) filtering for the country and (b) find average and total emission rates overtime.  |                                                                                                                                 |
-|            |                     |                             |                                                                                                                                                                                                                           |                                                                                                                                 |
-|            |                     | \(2\) `pop`                 |                                                                                                                                                                                                                           |                                                                                                                                 |
-|            |                     |                             |                                                                                                                                                                                                                           |                                                                                                                                 |
-|            |                     | `geometry` (polygons)       |                                                                                                                                                                                                                           |                                                                                                                                 |
-+------------+---------------------+-----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
-| Sectors    | Plume               | `ipcc_sector`               | Find CO2 and CH4 emissions per sector using `group_by` and `summarise`.                                                                                                                                                   | A decent amount of CO2 plume emissions is from a sector called "other". Is that a problem?                                      |
-|            |                     |                             |                                                                                                                                                                                                                           |                                                                                                                                 |
-|            |                     | `emission_auto`             |                                                                                                                                                                                                                           | 10 Methane plumes have no sector mentioned. I removed these points from the plot. Is that the proper way of dealing with this?  |
-+------------+---------------------+-----------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------+
++------------+---------------------+-----------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **Topics** | **Data sets**       | **Variables/ Column Names** | **How**                                                                                                                                                                                                                  | **Problems/ Questions**                                                                                                        |
++------------+---------------------+-----------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Temporally | Plume               | `datetime`                  | Find total and average emissions overtime for CO2 and CH4 using `group_by` and `summarise`.                                                                                                                              | Inconsistent records in past.                                                                                                  |
+|            |                     |                             |                                                                                                                                                                                                                          |                                                                                                                                |
+|            |                     | `emission_auto`             |                                                                                                                                                                                                                          | Methane concentrations are MUCH less than CO2 –\> cannot be put on same plot and share a y-axis.                               |
+|            |                     |                             |                                                                                                                                                                                                                          |                                                                                                                                |
+|            |                     | `gas`                       |                                                                                                                                                                                                                          | What would be better: average or total emissions in a day/year?                                                                |
++------------+---------------------+-----------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Spatially  | \(1\) Plume         | \(1\) `geometry` (points)   | Spatially join the point Plume and polygon World data.                                                                                                                                                                   | What is better for understanding emissions for each country: per capita or total/mean emissions for each country?              |
+|            |                     |                             |                                                                                                                                                                                                                          |                                                                                                                                |
+|            | \(2\) spData::World | `gas`                       | Find the averages and total `emission_auto` measurements (per capita) for each country.                                                                                                                                  |                                                                                                                                |
+|            |                     |                             |                                                                                                                                                                                                                          |                                                                                                                                |
+|            |                     | `emission_auto`             | Additionally, for the countries with the highest emission rates, will create line plots of CO2 and CH4 emission rates over time by (a) filtering for the country and (b) find average and total emission rates overtime. |                                                                                                                                |
+|            |                     |                             |                                                                                                                                                                                                                          |                                                                                                                                |
+|            |                     | \(2\) `pop`                 |                                                                                                                                                                                                                          |                                                                                                                                |
+|            |                     |                             |                                                                                                                                                                                                                          |                                                                                                                                |
+|            |                     | `geometry` (polygons)       |                                                                                                                                                                                                                          |                                                                                                                                |
++------------+---------------------+-----------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Sectors    | Plume               | `ipcc_sector`               | Find CO2 and CH4 emissions per sector using `group_by` and `summarise`.                                                                                                                                                  | A decent amount of CO2 plume emissions is from a sector called "other". Is that a problem?                                     |
+|            |                     |                             |                                                                                                                                                                                                                          |                                                                                                                                |
+|            |                     | `emission_auto`             |                                                                                                                                                                                                                          | 10 Methane plumes have no sector mentioned. I removed these points from the plot. Is that the proper way of dealing with this? |
++------------+---------------------+-----------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 
 ```{r}
 # Sources and scences data 
@@ -117,6 +117,10 @@ gas_pal <- c("CO2" = "#7F28D5",
 
 Bar Chart
 
+Density as cloud of smoke
+
+Change to line with world data - by year vs month
+
 ```{r, width = 9}
 # Plot [CO2] on top and [CH4] on bottom - Problem: [CO2] >>>> [CH4]
 ggplot() +
@@ -144,7 +148,7 @@ ggplot() +
 
 # Plot [CO2] and [CH4] next to eachother
 a <- ggplot() +
-  geom_bar(data = plume_datetime %>% filter(gas == "CO2"),
+  geom_line(data = plume_datetime %>% filter(gas == "CO2"),
            aes(x = datetime, y = total_emissions), 
            stat = "identity", 
            color = gas_pal["CO2"]) + 
@@ -154,7 +158,7 @@ a <- ggplot() +
        title = "Carbon Dioxide")
 
 b <- ggplot() + 
-  geom_bar(data = plume_datetime %>% filter(gas == "CH4"),
+  geom_line(data = plume_datetime %>% filter(gas == "CH4"),
            aes(x = datetime, y = total_emissions),
            stat = "identity", 
            color = gas_pal["CH4"]) + 
@@ -163,6 +167,8 @@ b <- ggplot() +
   labs(x = "Time", 
        title = "Methane")
   
+a
+
 (a | b ) + 
   plot_annotation(title = "Plume Emissions Overtime", 
                   subtitle = "Since 2022, plume emission have risen, emitting massive amounts of CO2 into the atmosphere.", 
@@ -359,6 +365,17 @@ plume_country_emissions <- plumes_country %>%
             pop = mean(pop),
             .groups = "drop") %>% 
   mutate(emission_total_capita = emission_total/pop)  
+
+
+plume_country_emissions <- plumes_country %>% 
+  group_by(name_long) %>% 
+  summarise(emission_total = sum(emission_auto, na.rm = TRUE),
+            pop = mean(pop),
+            .groups = "drop") %>% 
+  mutate(emission_total_capita = (emission_total/pop), 
+         emission_per_million = (emission_total/pop) * 1e6  )  # per 1 million people
+
+
 ```
 
 ```{r}
@@ -406,6 +423,31 @@ ggplot(plume_country_emissions) +
   ) + 
   guides(fill = guide_colorbar(barwidth = 15, barheight = 0.75, title.position = "top")) 
 
+
+
+# Countries Total Emissions Per Millions of people
+emissions_per_million <- ggplot(plume_country_emissions) + 
+  geom_sf(aes(fill = emission_per_million)) + 
+  scale_fill_viridis_c() + 
+  theme_void() + 
+  labs(
+    title = "Total Plume Emissions By Country", 
+    subtitle = "Saudi Arabia have the highest plume emissions, followed by Libya.",
+    fill = "Total Plume Emission (kg/hr) Per Million People", 
+    caption = "Data Source: Carbon Mapper"
+  ) + 
+  theme(
+    legend.position = "bottom", 
+    plot.title = element_text(size = 15, face = "bold"), 
+    plot.title.position = "plot", 
+    plot.subtitle.position = "plot",  
+    plot.caption = element_text(face = "italic")
+  ) + 
+  guides(fill = guide_colorbar(barwidth = 15, barheight = 0.75, title.position = "top")) 
+
+# Save 
+ggsave(plot = emissions_per_million, 
+       filename = here::here("final_figs", "map_per_millions.pdf"))
 ```
 
 ### Of the highest emitters, look at their emissions overtime
@@ -550,6 +592,11 @@ counties %>% # Want all polygons in the map
 
 ```
 
+```{r}
+
+
+```
+
 ## Sectors
 
 Sectors - color palette, dictionary, order
@@ -651,7 +698,7 @@ plumes %>%
   tm_basemap("Esri.OceanBasemap")
 ```
 
-## Gas Differences 
+## Gas Differences
 
 Having a really hard time with this concept
 
@@ -759,19 +806,21 @@ gas_concentration_plot <- ggplot() +
         axis.title.x = element_blank(), 
         legend.position = "bottom")
 
+gas_gwp_plot
 
 (gas_gwp_plot | gas_concentration_plot)
 
-
+ggsave(filename = here::here("final_figs", "gwp.pdf"), 
+       plot = gas_gwp_plot)
 ```
 
-## Hand Drawn Visualizations 
+## Hand Drawn Visualizations
 
 ```{r}
 knitr::include_graphics(here::here("anticipiated_vis.PNG"))
 ```
 
-## Code the Hand Drawing 
+## Code the Hand Drawing
 
 Create the base plot
 
@@ -815,7 +864,7 @@ ggsave(plot = plot_final,
 
 ```
 
-## Questions 
+## Questions
 
 **1.** What are the key insights you want your infographic to communicate, and how will your design choices help highlight and support those messages?
 

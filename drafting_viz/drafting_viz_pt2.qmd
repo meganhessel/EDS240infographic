@@ -166,14 +166,16 @@ plumes_CO2_per_country <- plumes_per_country %>%
              y = emission_per_million, 
              fill = name_long)) +
   geom_stream(type = "ridge",  bw = 0.85) + 
-  geom_stream_label(aes(label = name_long), 
-                    type = "ridge", 
-                    size = 2.5) +
+  #geom_stream_label(aes(label = name_long), 
+                    #type = "ridge", 
+                    #size = 2.5) +
   theme_minimal() + 
-  theme(legend.position = "none") 
+  theme(legend.position = "none", 
+        axis.title.y = element_blank(), 
+        axis.title.x = element_blank())
+
 
 plumes_CO2_per_country
-
 
 
 
@@ -181,16 +183,19 @@ plumes_CH4_per_country <- plumes_per_country %>%
   filter(gas == "CH4", 
          year >= 2023, 
          name_long %in% top_countries_CH4) %>% 
-  #mutate(avg_emissions = -avg_emissions) %>% 
+  #mutate(emission_per_million = -emission_per_million) %>% 
   ggplot(aes(x = year_dec, #  use decimal year 
              y = emission_per_million, 
              fill = name_long)) +
   geom_stream(type = "ridge",  bw = 0.85) + 
-  geom_stream_label(aes(label = name_long), 
-                    type = "ridge", 
-                    size = 2.5) +
+ # geom_stream_label(aes(label = name_long), 
+                    #type = "ridge", 
+                    #size = 2.5) +
   theme_minimal() + 
-  theme(legend.position = "none")
+  theme(legend.position = "none", 
+        axis.title.y = element_blank(), 
+        axis.title.x = element_blank())
+
 
 
 plumes_CH4_per_country
@@ -202,10 +207,72 @@ plumes_CO2_per_country / plumes_CH4_per_country + plot_layout(heights = c(1, 1))
 ```
 
 ```{r}
-plumes_per_country %>%
-  filter(gas == "CH4") %>%
-  mutate(year_dec = year + (month - 1) / 12) %>%
-  ggplot(aes(x = year_dec, y = avg_emissions, fill = name_long)) +
-  geom_stream()
+plumes_per_country %>% 
+  filter(gas == "CH4", 
+         year >= 2023, 
+         name_long %in% top_countries_CH4) %>% 
+  #mutate(emission_per_million = -emission_per_million) %>% 
+  ggplot(aes(x = year_dec, #  use decimal year 
+             y = emission_per_million, 
+             fill = name_long)) +
+  geom_stream(type = "ridge",  bw = 0.85) + 
+  geom_stream_label(aes(label = name_long), 
+                    type = "ridge", 
+                    size = 2.5) +
+  theme_minimal() + 
+  theme(axis.title.y = element_blank(), 
+        axis.title.x = element_blank())
+
+
+
+plumes_per_country %>% 
+  filter(gas == "CO2", 
+         year >= 2023, 
+         name_long %in% top_countries_CO2) %>% 
+  ggplot(aes(x = year_dec, #  use decimal year 
+             y = emission_per_million, 
+             fill = name_long)) +
+  geom_stream(type = "ridge",  bw = 0.85) + 
+  geom_stream_label(aes(label = name_long), 
+                    type = "ridge", 
+                    size = 2.5) +
+  theme_minimal() + 
+  theme(axis.title.y = element_blank(), 
+        axis.title.x = element_blank())
+
 ```
+
+
+```{r}
+ggsave(filename = here::here("final_figs", "plumes_CO2_per_country.pdf"), 
+       plot = plumes_CO2_per_country, 
+       width = 6, 
+       height = 4)
+
+
+ggsave(filename = here::here("final_figs", "plumes_CH4_per_country.pdf"), 
+       plot = plumes_CH4_per_country, 
+       width = 6, 
+       height = 4)
+```
+
+
+```{r}
+gas_total_emissions <- plumes %>% 
+  group_by(gas) %>% 
+  summarise(emission_auto = sum(emission_auto, na.rm = TRUE)) %>% 
+  st_drop_geometry() %>% 
+  ggplot() + 
+  geom_col(aes(x = gas, y = emission_auto)) + 
+  theme_minimal()
+
+gas_total_emissions
+  
+ggsave(filename = here::here("final_figs", "gas_total_emissions.pdf"), 
+       plot = gas_total_emissions, 
+       width = 5, 
+       height = 5)
+
+```
+
 
