@@ -1,0 +1,312 @@
+---
+title: "info_plots"
+format: html
+---
+
+```{r}
+library(treemapify)
+library(tidyverse)
+library(dplyr)
+library(sf)
+library(tmap)
+library(patchwork)
+library(ggtext)
+library(ggplotify)
+library(ggplot2)
+library(cowplot)
+library(ggstream)
+```
+
+Load in data 
+```{r}
+# Sources and scences data 
+scences <- read_sf(here::here("data", "scenes_2026-02-04T02_01_53.248Z.gpkg"))
+sources  <- read_sf(here::here("data", "sources_2025-12-28T21_56_47.135Z.json"))
+
+# Plumes by year
+plumes_2016 <- read.csv(here::here("data", "plume_yearly", "export_2016_2017", "export_2016-01-01_2017-01-01.csv")) 
+plumes_2017 <- read.csv(here::here("data", "plume_yearly", "export_2017_2018", "export_2017-01-01_2018-01-01.csv")) 
+plumes_2018 <- read.csv(here::here("data", "plume_yearly", "export_2018_2019", "export_2018-01-01_2019-01-01.csv")) 
+plumes_2019 <- read.csv(here::here("data", "plume_yearly", "export_2019_2020", "export_2019-01-01_2020-01-01.csv")) 
+plumes_2020 <- read.csv(here::here("data", "plume_yearly", "export_2020_2021", "export_2020-01-01_2021-01-01.csv")) 
+plumes_2021 <- read.csv(here::here("data", "plume_yearly", "export_2021_2022", "export_2021-01-01_2022-01-01.csv")) 
+plumes_2022 <- read.csv(here::here("data", "plume_yearly", "export_2022_2023", "export_2022-01-01_2023-01-01.csv")) 
+plumes_2023 <- read.csv(here::here("data", "plume_yearly", "export_2023_2024", "export_2023-01-01_2024-01-01.csv")) 
+plumes_2024 <- read.csv(here::here("data", "plume_yearly", "export_2024_2025", "export_2024-01-01_2025-01-01.csv")) 
+plumes_2025 <- read.csv(here::here("data", "plume_yearly", "export_2025_2025", "export_2025-01-01_2025-10-01.csv")) 
+
+# Get country data 
+counties <- spData::world
+
+# Combines the years into `plumes`
+plumes <- rbind(plumes_2016, plumes_2017, plumes_2018, plumes_2019, plumes_2020, plumes_2021, plumes_2022, plumes_2023, plumes_2024, plumes_2025)
+
+
+# Make plumes spatial
+plumes <- st_as_sf(plumes, coords = c('plume_longitude', 'plume_latitude'), crs = 'EPSG:4326')
+
+
+# Join plumes and countries 
+plumes_country <- st_join(counties, plumes)
+
+# Remove extra dataframes from the environment 
+rm(list = c('plumes_2016', 'plumes_2017', 'plumes_2018', 'plumes_2019', 'plumes_2020', 'plumes_2021', 'plumes_2022', 'plumes_2023', 'plumes_2024', 'plumes_2025'))
+
+
+```
+
+Color Palettes 
+```{r}
+gas_pal <- c("CO2" = "#7F28D5", 
+             "CH4" = "#F0831F")
+
+sector_color_pal <- c("Coal Mining (1B1a)" = "#281451",
+                      "Waste Water (6B)" = "#6C67DF",
+                      "Oil & Gas (1B2)" = "#9D56CA",
+                      "Livestock (4B)" = "#B70865", 
+                      "Solid Waste (6A)" = "#580B41",
+                      "Electricity Generation (1A1)" = "#D09232",
+                      "Other" = "#737373")
+
+ch4_bins_pal <- c('#F6EFFA', '#CAA5DF', '#B690AB', '#965B9A', '#4A306D', '#0E273C')
+co2_bins_pal <- c('#fff4d6', '#F1C974', '#F08637', '#EC6933', '#E14225', '#962f00')
+
+```
+
+**Sector Bar plot**
+```{r}
+# Data Wrangling 
+plumeDF_sector_tot_emission <- plumes %>% 
+  group_by(ipcc_sector, gas) %>% 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE), # Total Emissions 
+            .groups = "drop") %>%
+  st_drop_geometry() %>% 
+  filter(!ipcc_sector == "") # remove data points with no sector listed 
+
+
+
+# Turn sectors into factors 
+# plumeDF_sector_tot_emission$ipcc_sector <- factor(plumeDF_sector_tot_emission$ipcc_sector,
+#                                                      levels = sector_order)
+
+# ------------ CH4 plot ------------
+
+# Methane Sector plot 
+plumeDF_CH4_sector_plot <- plumeDF_sector_tot_emission %>% 
+  filter(gas == "CH4") %>% 
+  ggplot() + 
+  #geom_treemap(aes(area = total_emissions, fill = ipcc_sector)) + # tree map 
+  geom_bar(aes(x = "", y = total_emissions, fill = ipcc_sector), # Pie chart
+           stat="identity", 
+           width = 0.7, 
+           color = "black") + 
+  #coord_polar("y", start=0) + 
+  scale_fill_manual(values = sector_color_pal) +
+  theme_void() + 
+  labs(title = "Methane Plumes", 
+       fill = "Sector") + 
+  theme(plot.title = element_text(size = 13))
+
+
+# ------------ CO2 plot ------------
+
+# CO2 Sector plot 
+plumeDF_CO2_sector_plot <- plumeDF_sector_tot_emission %>% 
+  filter(gas == "CO2") %>% 
+  ggplot() + 
+  #geom_treemap(aes(area = total_emissions, fill = ipcc_sector)) + # tree map 
+  geom_bar(aes(x = "", y = total_emissions, fill = ipcc_sector), # Pie chart
+           stat="identity", 
+           width = 0.7, 
+           color = "black") + 
+  #coord_polar("y", start=0) + 
+  scale_fill_manual(values = sector_color_pal) +
+  theme_void() + 
+  labs(title = "Carbon Dioxide Plumes", 
+       fill = "Sector") + 
+  theme(plot.title = element_text(size = 13), 
+        legend.position = "none")
+  
+# Plots together 
+plume_sector_plot <- (plumeDF_CO2_sector_plot | plumeDF_CH4_sector_plot) +
+  plot_annotation(title = "Sector Composition", 
+                  subtitle = "The oil and natural gas sector emits the most methane,\nwhereas Electricity Generation emits the most carbon dioxide.", 
+                  caption = "Data Source: Carbon Mapper",
+                  theme = theme(plot.title = element_text(size = 17, face = "bold"), 
+                                plot.subtitle = element_text(size = 12, color = "gray60"),
+                                plot.caption = element_text(face = "italic")))
+plume_sector_plot
+
+# ggsave(filename = here::here("final_figs", "sector.pdf"), 
+#        plot = plume_sector_plot, 
+#        height = 7,
+#        width = 9
+#        )
+
+```
+
+Find each country's emissions per capita & per million people OVERTIME 
+```{r}
+
+plumes_per_country_overtime <-plumes_country %>% 
+  st_drop_geometry() %>% 
+  group_by(name_long, year = year(datetime), month = month(datetime), gas) %>%  # Find avg and sum for each month of each year 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE),
+            avg_emissions = mean(emission_auto, na.rm = TRUE),
+            pop = mean(pop),
+            .groups = "drop") %>%
+  mutate(year_dec = year + (month - 1) / 12, #decimal year 
+         emission_total_capita = (total_emissions/pop), 
+         emission_per_million = (total_emissions/pop) * 1e6) # per 1 million people
+
+```
+
+Find each country's emissions per capita & per million people in general
+```{r}
+plumes_per_country <-plumes_country %>% 
+  st_drop_geometry() %>% 
+  group_by(name_long, gas) %>%  # Find total emissions per country 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE),
+            avg_emissions = mean(emission_auto, na.rm = TRUE),
+            pop = mean(pop),
+            .groups = "drop") %>%
+  mutate(emission_total_capita = (total_emissions/pop), 
+         emission_per_million = (total_emissions/pop) * 1e6)
+  
+```
+
+
+Find the top 10 country emitters for each gas 
+```{r}
+
+top_countries_CH4 <- plumes_per_country %>%
+  filter(gas == "CH4") %>%
+  group_by(name_long) %>%
+  summarise(total = sum(emission_per_million)) %>%
+  slice_max(total, n = 10) %>%
+  pull(name_long)
+
+
+top_countries_CO2 <- plumes_per_country %>%
+  filter(gas == "CO2") %>%
+  group_by(name_long) %>%
+  summarise(total = sum(emission_per_million)) %>%
+  slice_max(total, n = 10) %>%
+  pull(name_long)
+
+
+```
+
+**Stream plot** of top 10 emitters overtime 
+```{r}
+
+# ------------ CH4 plot ------------
+
+# For CH4
+plumes_per_country_overtime %>% 
+  filter(gas == "CH4", 
+         year >= 2023, 
+         name_long %in% top_countries_CH4) %>% 
+  #mutate(emission_per_million = -emission_per_million) %>% 
+  ggplot(aes(x = year_dec, #  use decimal year 
+             y = emission_per_million, 
+             fill = name_long)) +
+  geom_stream(type = "ridge",  bw = 0.85) + 
+  geom_stream_label(aes(label = name_long), 
+                    type = "ridge", 
+                    size = 2.5) +
+  theme_minimal() + 
+  theme(axis.title.y = element_blank(), 
+        axis.title.x = element_blank())
+
+
+# ------------ CO2 plot ------------
+
+# For CO2
+plumes_per_country_overtime %>% 
+  filter(gas == "CO2", 
+         year >= 2023, 
+         name_long %in% top_countries_CO2) %>% 
+  ggplot(aes(x = year_dec, #  use decimal year 
+             y = emission_per_million, 
+             fill = name_long)) +
+  geom_stream(type = "ridge",  bw = 0.85) + 
+  geom_stream_label(aes(label = name_long), 
+                    type = "ridge", 
+                    size = 2.5) +
+  theme_minimal() + 
+  theme(axis.title.y = element_blank(), 
+        axis.title.x = element_blank())
+
+```
+
+Saving the plots
+```{r}
+# ggsave(filename = here::here("final_figs", "plumes_CO2_per_country.pdf"), 
+#        plot = plumes_CO2_per_country, 
+#        width = 6, 
+#        height = 4)
+# 
+# 
+# ggsave(filename = here::here("final_figs", "plumes_CH4_per_country.pdf"), 
+#        plot = plumes_CH4_per_country, 
+#        width = 6, 
+#        height = 4)
+```
+
+
+```{r}
+gas_total_emissions <- plumes %>% 
+  group_by(gas) %>% 
+  summarise(emission_auto = sum(emission_auto, na.rm = TRUE)) %>% 
+  st_drop_geometry() %>% 
+  ggplot() + 
+  geom_col(aes(x = gas, y = emission_auto, fill = gas)) + 
+  scale_fill_manual(values = gas_pal) +
+  theme_minimal() + 
+  labs(y = "Total Emission (kg/hr)")
+
+gas_total_emissions
+
+# ggsave(filename = here::here("final_figs", "gas_total_emissions.pdf"), 
+#        plot = gas_total_emissions, 
+#        width = 5, 
+#        height = 5)
+
+```
+Circle Area plot 
+```{r}
+
+gwp <- data.frame(gas = c("CO2", "CH4"), 
+                  life_time = c(500, 12.4), # Chem life times 
+                  gwp = c(1,28)) # global warmining potential 
+
+# plot 
+gas_gwp_plot <- ggplot() +
+  geom_point(data = gwp, 
+             mapping = aes(x = gas, y = 0, size = gwp, fill = gas), 
+             shape = 21, color = "black", alpha = 0.7) +
+  scale_size_area(max_size = 20) +  # Ensures area ~ value
+  coord_fixed(ratio = 5) +          # Keep circles round
+  theme_minimal() +
+  scale_fill_manual(values = gas_pal, guide = "none") + 
+  labs(
+    title = "Global Warming Potiential (gwp)",
+    size = "Value"
+  ) +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(), 
+        axis.title.y = element_blank(), 
+        axis.title.x = element_blank(), 
+        legend.position = "bottom")
+
+gas_gwp_plot
+
+# ggsave(filename = here::here("figs", "gas_gwp_plot.pdf"), 
+#        plot = gas_gwp_plot, 
+#        width = 7, 
+#        height = 5)
+
+```
+
+

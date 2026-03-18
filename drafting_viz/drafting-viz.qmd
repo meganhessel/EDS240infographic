@@ -810,8 +810,8 @@ gas_gwp_plot
 
 (gas_gwp_plot | gas_concentration_plot)
 
-ggsave(filename = here::here("final_figs", "gwp.pdf"), 
-       plot = gas_gwp_plot)
+#ggsave(filename = here::here("final_figs", "gwp.pdf"), 
+      #plot = gas_gwp_plot)
 ```
 
 ## Hand Drawn Visualizations

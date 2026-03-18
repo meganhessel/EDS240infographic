@@ -10,7 +10,7 @@ This is the final assignment for EDS 240 Data Visualization.
 
 This project is in the development phase and is a project for EDS240 Data Visualization. Therefore, the data structure mirrors the assignments and their order. 
 
-The folders `data_exploration`, `drafting_viz`, and `FMP4` are the initial assignments to the final infographic which will be located in `FPM5`. To accomplish the infographic, plots were drafted in drafting_viz qmds and finalized in affinity - both located within the `figs` and `output` folders. 
+The folders `data_exploration`, `drafting_viz`, and `FMP4` are the initial assignments to the final infographic which will be located in `final_scripts`. To accomplish the infographic, plots were drafted in drafting_viz qmds and finalized in affinity - both located within the `figs` and `output` folders. 
 
 ```
 project/
@@ -26,6 +26,8 @@ project/
 │   └── fpm3_infographic.png/
 ├── FPM4/
 │   └── FMP4.qmd/
+├── final_scripts/
+│   └── info_plots.qmd/
 ├── figs/
 │   ├── Draft inforgraphics/
 │   └── plots/
