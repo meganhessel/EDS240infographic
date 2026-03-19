@@ -275,4 +275,73 @@ ggsave(filename = here::here("final_figs", "gas_total_emissions.pdf"),
 
 ```
 
+Map of global Emissions 
+```{r}
+# Wrangle - emission pre country (not overtime and spatial)
+plumes_per_country_sf <-plumes_country %>% 
+  group_by(name_long, gas) %>%  # Find total emissions per country 
+  summarise(total_emissions = sum(emission_auto, na.rm = TRUE),
+            avg_emissions = mean(emission_auto, na.rm = TRUE),
+            pop = mean(pop),
+            .groups = "drop") %>%
+  mutate(emission_total_capita = (total_emissions/pop), 
+         emission_per_million = (total_emissions/pop) * 1e6)
+  
 
+# ------------ CO2 plot ------------
+
+# Just CO2 plumes
+plumes_per_country_sf_co2 <- plumes_per_country_sf %>% 
+  filter(gas == "CO2") 
+
+# CO2 Map 
+co2_map_cont <- ggplot() + 
+  geom_sf(data = plumes_per_country_sf, 
+          fill = "white") + 
+  geom_sf(data = plumes_per_country_sf_co2, 
+          mapping = aes(fill = emission_per_million))+
+  #scale_fill_binned(n.breaks = 5, na.value = "grey90", palette = co2_bins_pal) +
+  scale_fill_continuous(low = '#fff4d6', 
+                        high = '#962f00',
+                        na.value = "grey90") +
+  theme_void()+ 
+  theme(legend.position = "bottom")+ 
+  guides(fill = guide_colorbar(barwidth = 15, barheight = 0.75, title.position = "top")) 
+
+co2_map_cont
+
+# ------------ CH4 plot ------------
+
+# Just CH4 plumes  
+plumes_per_country_sf_ch4 <- plumes_per_country_sf %>% 
+  filter(gas == "CH4") 
+
+# CH4 Map  
+ch4_map_cont <- ggplot() + 
+  geom_sf(data = plumes_per_country_sf, 
+          fill = "white") + 
+  geom_sf(data = plumes_per_country_sf_ch4, 
+          mapping = aes(fill = emission_per_million))+
+  #scale_fill_binned(n.breaks = 6, na.value = "grey90", palette = ch4_bins_pal) +
+  scale_fill_continuous(low = '#F6EFFA', 
+                        high = '#93009e',
+                        na.value = "grey90") +
+  theme_void()+ 
+  theme(legend.position = "bottom")+ 
+  guides(fill = guide_colorbar(barwidth = 15, barheight = 0.75, title.position = "top")) 
+
+ch4_map_cont
+```
+
+```{r}
+ggsave(filename = here::here("figs", "co2_map_cont.pdf"),
+       plot = co2_map_cont,
+       width = 8,
+       height = 5)
+
+ggsave(filename = here::here("figs", "ch4_map_cont.pdf"),
+       plot = ch4_map_cont,
+       width = 8,
+       height = 5)
+
+```
