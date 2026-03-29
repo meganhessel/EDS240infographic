@@ -29,7 +29,7 @@ project/
 ├── final_scripts/
 │   └── info_plots.qmd/
 ├── figs/
-│   ├── Draft inforgraphics/
+│   ├── Draft infographics/
 │   └── plots/
 ├── images/
 ├── outputs/
